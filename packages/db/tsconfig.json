@@ -3,17 +3,18 @@
     // Environment setup & latest features
     "lib": ["ESNext"],
     "target": "ESNext",
-    "module": "Preserve",
+    "module": "ESNext",                     // ⬅️ MUST be "ESNext" for ESM support (not "Preserve")
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
-
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false,
     // Bundler mode
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
-
     // Best practices
     "strict": true,
     "skipLibCheck": true,
