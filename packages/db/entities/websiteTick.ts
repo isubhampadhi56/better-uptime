@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
 } from "typeorm"
 import type { Relation } from "typeorm"
 import { WebsiteStatus } from "../types/website"
@@ -21,17 +22,20 @@ export class WebsiteTick {
   @Column({type: "varchar"})
   status?: WebsiteStatus
 
+  @CreateDateColumn({ name: "createdAt" })
+  createdAt!: Date
+
   @ManyToOne(() => Region, (region) => region.ticks)
-  @JoinColumn({ name: "region_id" })
+  @JoinColumn({ name: "regionId" })
   region?: Relation<Region>
 
   @ManyToOne(() => Website, (website) => website.ticks)
-  @JoinColumn({ name: "website_id" })
+  @JoinColumn({ name: "websiteId" })
   website?: Relation<Website>
 
   @Column({type: "varchar"})
-  region_id!: string
+  regionId!: string
 
   @Column({type: "varchar"})
-  website_id!: string
+  websiteId!: string
 }
