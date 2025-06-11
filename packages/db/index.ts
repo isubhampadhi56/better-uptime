@@ -5,6 +5,7 @@ import { DataSource } from "typeorm";
 import { Website } from "./entities/website";
 import { Region } from "./entities/region";
 import { WebsiteTick } from "./entities/websiteTick";
+import { User } from "./entities/user";
 import "reflect-metadata";
 
 
@@ -20,7 +21,8 @@ const {
 const entities = [
     Website,
     Region,
-    WebsiteTick
+    WebsiteTick,
+    User
 ]
 const postgresSqlConnectionOprtions: PostgresConnectionOptions = {
     type: "postgres",
@@ -74,5 +76,5 @@ export async function disconnectFromDB(){
 export const websiteRepo = sqlDatasource.getRepository(Website);
 export const regionRepo = sqlDatasource.getRepository(Region);
 export const websiteTickRepo = sqlDatasource.getRepository(WebsiteTick);
-
-export { Website, WebsiteTick, Region };
+export const userRepo = sqlDatasource.getRepository(User);
+export { Website, WebsiteTick, Region, User };
