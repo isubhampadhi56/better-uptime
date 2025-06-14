@@ -3,7 +3,9 @@ import type { Request, Response } from "express-serve-static-core"
 import { router as v1Router } from "./routes/v1/index"
 import AppError from "./module/error.module";
 import { ZodError } from "zod";
+import cors from "cors";
 export const app = express();
+app.use(cors());
 app.use(express.json());
 app.use("/v1",v1Router)
 app.use(function (

@@ -7,7 +7,7 @@ export const authMiddleware = async (
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.get("authorization");
+    const authHeader = req.get("Authorization");
     if (!authHeader) {
       throw new AppError(
         "authorization header missing",
