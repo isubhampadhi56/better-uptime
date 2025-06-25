@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { websiteRepo } from "db/client";
+import { websiteRepo, WebsiteTick, websiteTickRepo } from "db/client";
 
 const addWebsiteSchema = z.object({
   url: z.string().url()
@@ -26,13 +26,24 @@ export async function getWebsiteList(userId:string) {
     return websites;
 }
 
-export async function getWebsiteDetails(websiteReq:any,userId:string) {
+export async function getWebsiteDetails(websiteId:string,userId:string) {
     const website = await websiteRepo.findOne(
     { 
       where: {
-        id: websiteReq.websiteId,
+        id: websiteId,
         userId: userId
       },
     });
-    return website;
+    if(!website){
+      return {};
+    }
+    const ticks = await websiteTickRepo.find({
+      where:{
+        id: websiteId
+      },
+      order:{
+        createdAt: "DESC",
+      }
+    })
+    return {...website,ticks};
 }
