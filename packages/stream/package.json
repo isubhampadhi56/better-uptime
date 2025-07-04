@@ -1,0 +1,17 @@
+{
+  "name": "stream",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "dotenv": "^16.5.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@types/ioredis": "^5.0.0",
+    "ioredis": "^5.6.1"
+  }
+}
