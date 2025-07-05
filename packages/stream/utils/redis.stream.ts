@@ -1,28 +1,20 @@
-import { Redis } from "ioredis";
+import { Cluster, Redis } from "ioredis";
 import type { Stream } from "./baseClass";
 
 export class RedisStream implements Stream{
     private static instance:RedisStream;
-    private redisCluster:any;
+    private redisCluster:Cluster;
     private redisEndpoints:any;
     private redisPassword:string;
     private constructor(){
         const redisHost = String(process.env.REDIS_HOSTS).split(',');
-        this.redisEndpoints = [];
-        redisHost.forEach(host => {
-            const [hostname,port] = host.split(':');
-            this.redisEndpoints.push({
-                host: hostname,
-                port: port,
-            })
-        })
-        console.log(this.redisEndpoints);
-        this.redisPassword = String(process.env.REDIS_PASSWORD)
-        this.connect().then(() => {
-            console.log("Connected to redis");  
-        }).catch(err => {
-            console.log(err);
-        })
+        this.redisEndpoints = redisHost.map((host) => {
+            const [hostname, port] = host.split(':');
+            return { host: hostname, port: Number(port) };
+        });
+        this.redisPassword = String(process.env.REDIS_PASSWORD);
+        console.log(this.redisEndpoints,this.redisPassword);
+        this.redisCluster = this.connect();
     }
     public static getInstance(){
         if(!RedisStream.instance){
@@ -30,28 +22,71 @@ export class RedisStream implements Stream{
         }
         return RedisStream.instance;
     }
-    async connect(){
-        this.redisCluster = new Redis.Cluster(this.redisEndpoints,
-            {
-                redisOptions:{
-                    password: this.redisPassword
+    connect(){
+        try{
+            const redisCluster = new Redis.Cluster(this.redisEndpoints,
+                {
+                    redisOptions:{
+                        password: this.redisPassword,
+                        connectTimeout: 3000,        // 10 s to connect
+                        maxRetriesPerRequest: 3,      // fail after 3 retries
+                        offlineQueue: false
+                    },
+                    natMap: {
+                        "redis-node-0:6379": { host: "localhost", port: 7001 },
+                        "redis-node-1:6379": { host: "localhost", port: 7002 },
+                        "redis-node-2:6379": { host: "localhost", port: 7003 },
+                        "redis-node-3:6379": { host: "localhost", port: 7004 },
+                        "redis-node-4:6379": { host: "localhost", port: 7005 },
+                        "redis-node-5:6379": { host: "localhost", port: 7006 }
+                    },
                 }
-            }
-        );
+            );
+            console.log("connected to redis cluster");
+            return redisCluster;
+        }catch(err){
+            console.log(err);
+            throw Error("Failed t connect to Cluster")
+        }
     }
     async disconnect(){
-
+        await this.redisCluster.quit();
     }
     async writeData(key:string,data:string){
-        
+        try{
+            const id = await this.redisCluster.xadd(`"${key}"`,"*","data",`"${data}"`);
+            console.log(`Written Data to Stream with ID - ${id}`);
+        }catch(err){
+            console.log(`Error writing to Stream ${err}`);
+        }
     }
     async writeDataWithId(key:string,id:string,data:string){
-        
+        try{
+            await this.redisCluster.xadd(key,id,"data",data);
+        }catch(err){
+            throw new Error(`Error while reading from stream ${err}`);
+        }
     }
-    async readData(key:string){
-        return "";
+    async readData(key:string,groupName:string,consumerName:string){
+        const result = await this.redisCluster.xreadgroup('GROUP',groupName,consumerName,'STREAMS',key);
+        return result;
     }
     async readDataWithId(key:string,id:string){
         return "";
+    }
+    async addConsumerGroup(key:string,group:string){
+        try {
+            await this.redisCluster.xgroup('CREATE',key , group, '$', 'MKSTREAM');
+            console.log('Consumer group created');
+        } catch (err) {
+            if ((err as Error).message.includes('BUSYGROUP')) {
+            console.log('Consumer group already exists');
+            } else {
+            console.error('Error creating group:', err);
+            }
+        }
+    }
+    async ackowledgeMessage(key:string,groupName:string,messageId:[string]){
+        await this.redisCluster.xack(key, groupName, ...messageId);
     }
 }
