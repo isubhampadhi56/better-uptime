@@ -3,9 +3,8 @@ import { connectToDB, disconnectFromDB, websiteRepo } from "db/client";
 import { getInstance, Stream } from "stream/client";
 
 async function getWebsiteList(){
-    await connectToDB()
+    
     const websiteList = await websiteRepo.find({});
-    await disconnectFromDB();
     return websiteList;
 }
 async function addToStream(key: string,data:any){
@@ -23,5 +22,6 @@ async function main(){
     })
     await Promise.all(streamData);
 }
-main();
-setInterval(main,30000);
+await connectToDB();
+const timer = parseInt(String(process.env.PRODUCER_INTERVAL));
+setInterval(main,timer);
