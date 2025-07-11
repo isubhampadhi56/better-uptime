@@ -4,32 +4,33 @@ import type { Website } from "db/client"
 import { getInstance,Stream } from "stream/client";
 
 
-export async function checkStatus(websites:any[]){
-    const result = await Promise.allSettled(websites.map(async(website)=>{
+export async function checkStatus(websites:any,regionId:string){
+    if (!websites || !Array.isArray(websites)) return [];
+    const result = await Promise.all(websites[0][1].map(async(website:any)=>{
+        const websiteData = JSON.parse(website[1][1]);
+        const redisId = website[0];
         const start = Date.now();
         try{
-            const response = await axios.get(website.url,{ timeout: 30000 });
+            const response = await axios.get(websiteData.url,{ timeout: 20000 });
             const end = Date.now();
-            console.log(`Success ${website.url}`);
             return{
-                messageId: website.id,
-                websiteId: website.id,
-                url:website.url,
+                // messageId: redisId,
+                websiteId: websiteData.id,
+                // url:websiteData.url,
+                regionId: regionId,
                 response_time_ms: Math.round(end-start),
-                region: website.regionId,
                 status: response.status
 
             }
         }catch(err:any){
             const end = Date.now();
-            console.log(`Failed ${website.url}`);
             return{
-                messageId: website.id,
-                websiteId: website.id,
-                url:website.url,
+                // messageId: redisId,
+                websiteId: websiteData.id,
+                // url:websiteData.url,
+                regionId: regionId,
                 response_time_ms: Math.round(end-start),
-                region: website.regionId,
-                status: err?.response?.status ?? null,
+                status: err?.response?.status ?? "000",
 
             }
         }

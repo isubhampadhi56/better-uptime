@@ -1,8 +1,12 @@
-import { websiteRepo } from "db/client";
+import { sleep } from "bun";
+import { connectToDB, disconnectFromDB, websiteRepo } from "db/client";
 import { getInstance, Stream } from "stream/client";
 
 async function getWebsiteList(){
-    return await websiteRepo.find({});
+    await connectToDB()
+    const websiteList = await websiteRepo.find({});
+    await disconnectFromDB();
+    return websiteList;
 }
 async function addToStream(key: string,data:any){
     const redisStream  = getInstance(Stream.REDIS);
@@ -10,11 +14,14 @@ async function addToStream(key: string,data:any){
 }
 async function main(){
     const websites = await getWebsiteList();
+    const streamName = String(process.env.WEBSITE_LIST_STREAM);
     const streamData =  websites.map((website)=>{
-        console.log(`processing website${website.id}`)
-        return addToStream("betterup:websitelist",JSON.stringify(website))
+        return addToStream(streamName,JSON.stringify({
+            id: website.id,
+            url: website.url
+        }))
     })
     await Promise.all(streamData);
 }
-
-setInterval(main,180000);
+main();
+setInterval(main,30000);

@@ -13,7 +13,7 @@ export class RedisStream implements Stream{
             return { host: hostname, port: Number(port) };
         });
         this.redisPassword = String(process.env.REDIS_PASSWORD);
-        console.log(this.redisEndpoints,this.redisPassword);
+        console.log(this.redisEndpoints);
         this.redisCluster = this.connect();
     }
     public static getInstance(){
@@ -32,14 +32,6 @@ export class RedisStream implements Stream{
                         maxRetriesPerRequest: 3,      // fail after 3 retries
                         offlineQueue: false
                     },
-                    natMap: {
-                        "redis-node-0:6379": { host: "localhost", port: 7001 },
-                        "redis-node-1:6379": { host: "localhost", port: 7002 },
-                        "redis-node-2:6379": { host: "localhost", port: 7003 },
-                        "redis-node-3:6379": { host: "localhost", port: 7004 },
-                        "redis-node-4:6379": { host: "localhost", port: 7005 },
-                        "redis-node-5:6379": { host: "localhost", port: 7006 }
-                    },
                 }
             );
             console.log("connected to redis cluster");
@@ -54,7 +46,7 @@ export class RedisStream implements Stream{
     }
     async writeData(key:string,data:string){
         try{
-            const id = await this.redisCluster.xadd(`"${key}"`,"*","data",`"${data}"`);
+            const id = await this.redisCluster.xadd(key,"*","data",data);
             console.log(`Written Data to Stream with ID - ${id}`);
         }catch(err){
             console.log(`Error writing to Stream ${err}`);
@@ -67,8 +59,8 @@ export class RedisStream implements Stream{
             throw new Error(`Error while reading from stream ${err}`);
         }
     }
-    async readData(key:string,groupName:string,consumerName:string){
-        const result = await this.redisCluster.xreadgroup('GROUP',groupName,consumerName,'STREAMS',key);
+    async readData(key:string,groupName:string,consumerName:string,count:string){
+        const result = await this.redisCluster.xreadgroup('GROUP',groupName,consumerName,'COUNT',parseInt(count),'STREAMS',key,'>');
         return result;
     }
     async readDataWithId(key:string,id:string){

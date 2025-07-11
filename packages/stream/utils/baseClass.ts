@@ -5,7 +5,7 @@ export interface Stream{
     disconnect:() => Promise<any>;
     writeData:(key:string,data:string) => Promise<any>;
     writeDataWithId:(key:string,id:string,data:string) => Promise<any>;
-    readData:(key:string,groupName:string,consumerName:string) => Promise<any>;
+    readData:(key:string,groupName:string,consumerName:string,count:string) => Promise<any>;
     readDataWithId:(key:string,id:string) => Promise<string>;
 
 }
