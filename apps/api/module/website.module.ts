@@ -39,7 +39,7 @@ export async function getWebsiteDetails(websiteId:string,userId:string) {
     }
     const ticks = await websiteTickRepo.find({
       where:{
-        id: websiteId
+        websiteId: websiteId
       },
       order:{
         createdAt: "DESC",

@@ -21,4 +21,4 @@ RUN bun install
 EXPOSE 3000
 
 # Start the Bun backend
-CMD ["bun", "run", "main.ts"]
+CMD ["bun", "run", "index.ts"]
