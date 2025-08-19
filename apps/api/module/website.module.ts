@@ -23,7 +23,21 @@ export async function getWebsiteList(userId:string) {
         userId: userId
       },
     });
-    return websites;
+    const websiteList = await Promise.all(websites.map(async(website)=>{
+      const [latestTick] = await websiteTickRepo.find({
+        where: { website: { id: website.id } },
+        order: { createdAt: "DESC" },
+        take: 1,
+      });
+      return {
+        ...website,
+        status: latestTick?.status,
+        updatedAt: latestTick?.createdAt,
+        responseTime: latestTick?.response_time_ms
+      }
+    }))
+    // console.log(await getAvgResponseTime(websiteList[0]!.id))
+    return websiteList;
 }
 
 export async function getWebsiteDetails(websiteId:string,userId:string) {
@@ -38,12 +52,30 @@ export async function getWebsiteDetails(websiteId:string,userId:string) {
       return {};
     }
     const ticks = await websiteTickRepo.find({
-      where:{
-        websiteId: websiteId
-      },
+      where: { website: { id: websiteId } },
       order:{
         createdAt: "DESC",
       }
     })
-    return {...website,ticks};
+    const responseTime = await getAvgResponseTime(websiteId);
+    console.log(typeof(responseTime));
+    return {
+      ...website,
+      status: ticks[0]?.status,
+      updatedAt: ticks[0]?.createdAt,
+      responseTime: responseTime?.split('.')[0],
+      ticks
+    };
+}
+
+export async function getAvgResponseTime(websiteId:string){
+  const result = await websiteTickRepo
+  .createQueryBuilder("tick")
+  .select("AVG(tick.response_time_ms)", "avg")
+  .getRawOne();
+  return result?.avg;
+}
+
+export async function getUptime(websiteId:string){
+
 }
