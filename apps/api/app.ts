@@ -4,10 +4,24 @@ import { router as v1Router } from "./routes/v1/index"
 import AppError from "./module/error.module";
 import { ZodError } from "zod";
 import cors from "cors";
+import { sqlDatasource } from "db/client";
 export const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/v1",v1Router)
+app.get("/healthz", async(req,res)=>{
+    try{
+        if(!sqlDatasource.isInitialized){
+            res.status(500).send("DB not initialized");
+            return;
+        }
+        await sqlDatasource.query("SELECT 1");
+        res.status(200).send("OK");
+    }catch(err){
+        console.error("Health check failed:", err);
+        res.status(500).send("DB Error");
+    }
+});
 app.use(function (
   error: unknown,
   _req: Request,
